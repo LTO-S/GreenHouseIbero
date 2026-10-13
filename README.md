@@ -1,4 +1,4 @@
-🌹 Rose Greenhouse
+🌹 Rose Greenhouse 🌹
 
 Web app that simulates temperature, humidity and soil pH sensors for a rose greenhouse.
 
