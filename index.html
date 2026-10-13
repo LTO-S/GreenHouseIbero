@@ -1,21 +1,201 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>INVERNADERO</title>
-	<link rel="stylesheet" type="text/css" href="estilo.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Greenhouse</title>
+
+<style>
+  body    { font-family: sans-serif; color: #1F4D3A; margin: 0; }
+  main    { max-width: 700px; margin: 40px auto; padding: 25px; background: white; border-radius: 6px; }
+  .grid   { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+  .card   { background: #EEF4EA; padding: 12px; }
+  .value  { font-size: 2rem; font-weight: bold; }
+  button  { padding: 10px 18px; border: none; border-radius: 6px; color: white; background: #1F4D3A; cursor: pointer; }
+  .rose-button { background: #B8325E; }
+
+  /* Colors for each state */
+  .low    { color: #3A6EA5; }
+  .normal { color: #5E8F4E; }
+  .high   { color: #B8325E; }
+
+  /* Flower touch */
+  .garden { background: #EEF4EA radial-gradient(circle, #F2A7BE 5px, transparent 6px) 0 0 / 70px 70px; }
+  .leaf   { border-radius: 0 25px 0 25px; }
+  .flower { font-size: 4rem; text-align: center; }
+</style>
 </head>
-<body>
-	<h1>CONTROL DE VARIABLES DEL INVERNADERO</h1>
-<div>
-	<h3>Temperatura:</h3>
-	<input type="text" id="temp">
-	<h3>Humedad:</h3>
-	<input type="text" id="hume">
-	<h3>Reporte escrito:</h3>
-	<input type="text" id="texto">
-	<input type="button" id="datos" value="Leer datos">
-	<input type="button" id="hablar" value="Reporte">
-</div>
-<script src="script.js"></script>
+
+<body class="garden">
+<main>
+  <button onclick="changeLanguage('es')">Español</button>
+  <button onclick="changeLanguage('en')">English</button>
+
+  <h1 id="title"></h1>
+
+  <div class="grid">
+    <div class="card leaf">
+      <p id="temperatureLabel"></p>
+      <p class="value" id="temperature">-</p>
+    </div>
+    <div class="card leaf">
+      <p id="humidityLabel"></p>
+      <p class="value" id="humidity">-</p>
+    </div>
+    <div class="card leaf">
+      <p id="phLabel"></p>
+      <p class="value" id="ph">-</p>
+    </div>
+  </div>
+
+  <p class="flower" id="flower">🌱</p>
+  <p id="report"></p>
+
+  <button onclick="readSensors()" id="readButton"></button>
+  <button onclick="speak()" id="speakButton" class="rose-button"></button>
+</main>
+
+<script>
+// ---------------------------------------------
+// 1. TEXTS IN SPANISH AND ENGLISH
+// ---------------------------------------------
+const texts = {
+  es: {
+    title: "🌹 Invernadero de rosas",
+    temperature: "Temperatura",
+    humidity: "Humedad",
+    ph: "pH",
+    readButton: "Leer datos",
+    speakButton: "🔊 Escuchar",
+    report: "Reporte:",
+    low: "baja",
+    normal: "normal",
+    high: "alta",
+    voice: "es-ES"
+  },
+  en: {
+    title: "🌹 Rose greenhouse",
+    temperature: "Temperature",
+    humidity: "Humidity",
+    ph: "pH",
+    readButton: "Read data",
+    speakButton: "🔊 Listen",
+    report: "Report:",
+    low: "low",
+    normal: "normal",
+    high: "high",
+    voice: "en-US"
+  }
+};
+
+// ---------------------------------------------
+// 2. VARIABLES
+// ---------------------------------------------
+let language = "es";
+let temperature = 0;
+let humidity = 0;
+let ph = 0;
+
+// ---------------------------------------------
+// 3. HELPER FUNCTIONS
+// ---------------------------------------------
+
+// Gives a random whole number between min and max (fake sensor)
+function randomNumber(min, max) {
+  return Math.round(Math.random() * (max - min) + min);
+}
+
+// Says if a value is "low", "normal" or "high"
+function getState(value, min, max) {
+  if (value < min) {
+    return "low";
+  }
+  if (value > max) {
+    return "high";
+  }
+  return "normal";
+}
+
+// ---------------------------------------------
+// 4. BUTTON: CHANGE LANGUAGE
+// ---------------------------------------------
+function changeLanguage(newLanguage) {
+  language = newLanguage;
+  const words = texts[language];
+
+  document.getElementById("title").textContent = words.title;
+  document.getElementById("temperatureLabel").textContent = words.temperature;
+  document.getElementById("humidityLabel").textContent = words.humidity;
+  document.getElementById("phLabel").textContent = words.ph;
+  document.getElementById("readButton").textContent = words.readButton;
+  document.getElementById("speakButton").textContent = words.speakButton;
+
+  showReport();
+}
+
+// ---------------------------------------------
+// 5. BUTTON: READ DATA
+// ---------------------------------------------
+function readSensors() {
+  temperature = randomNumber(15, 40);   // °C
+  humidity = randomNumber(10, 100);     // %
+  ph = randomNumber(40, 85) / 10;       // from 4.0 to 8.5
+
+  showReport();
+}
+
+// ---------------------------------------------
+// 6. SHOW VALUES AND WRITTEN REPORT
+// ---------------------------------------------
+function showReport() {
+  if (temperature === 0) {
+    return;   // no data yet
+  }
+
+  const words = texts[language];
+
+  // Healthy ranges for roses
+  const temperatureState = getState(temperature, 20, 35);
+  const humidityState = getState(humidity, 40, 80);
+  const phState = getState(ph, 5.5, 6.5);
+
+  // Show the numbers with their color
+  document.getElementById("temperature").textContent = temperature + " °C";
+  document.getElementById("temperature").className = "value " + temperatureState;
+
+  document.getElementById("humidity").textContent = humidity + " %";
+  document.getElementById("humidity").className = "value " + humidityState;
+
+  document.getElementById("ph").textContent = ph;
+  document.getElementById("ph").className = "value " + phState;
+
+  // Written report
+  document.getElementById("report").textContent =
+    words.report + " " +
+    words.temperature + " " + words[temperatureState] + ", " +
+    words.humidity + " " + words[humidityState] + ", " +
+    words.ph + " " + words[phState] + ".";
+
+  // Rose: 🌹 if everything is normal, 🥀 if something is wrong
+  if (temperatureState === "normal" && humidityState === "normal" && phState === "normal") {
+    document.getElementById("flower").textContent = "🌹";
+  } else {
+    document.getElementById("flower").textContent = "🥀";
+  }
+}
+
+// ---------------------------------------------
+// 7. BUTTON: LISTEN (cognitive API: text to voice)
+// ---------------------------------------------
+function speak() {
+  const text = document.getElementById("report").textContent;
+  const message = new SpeechSynthesisUtterance(text);
+  message.lang = texts[language].voice;
+  speechSynthesis.speak(message);
+}
+
+// When the page opens, show the texts in Spanish
+changeLanguage("es");
+</script>
 </body>
 </html>
